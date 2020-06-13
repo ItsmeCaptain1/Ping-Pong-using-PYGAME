@@ -1,0 +1,161 @@
+import pygame
+import random
+from pygame import mixer
+
+pygame.init()
+
+# Define some colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+RED = (255, 0, 0)
+
+# About Window
+win_size = (800, 600)
+screen = pygame.display.set_mode(win_size)
+pygame.display.set_caption("Ping Pong")
+icon = pygame.image.load("E:\\Ping Pong\\ping-pong.png")
+pygame.display.set_icon(icon)
+
+# The Clock will be used to control how fast the screen updates
+fps = pygame.time.Clock()
+
+# music & sound
+mixer.music.load("E:\\Ping Pong\\background sound.wav")
+ball_hit_sound = mixer.Sound("E:\\Ping Pong\\ball hit sound.wav")
+mixer.music.play(-1)
+
+# paddle height & width
+height = 100
+width = 20
+
+# Player A
+A_posiX = 50 # 0 + 50(common)
+A_posiY = 300
+score_value_A = 0
+score_A_font = pygame.font.Font("freesansbold.ttf", 42)
+
+
+def show_A_player_score(x,y):
+    score = score_A_font.render("Player A : " + str(score_value_A) , True, WHITE)
+    screen.blit(score,(x,y))
+
+# common line
+def show_player(x,y):
+    pygame.draw.rect(screen, WHITE, pygame.Rect((x, y), (width, height)))
+
+# Player B
+B_posiX = 730   # 800 - 50(common) - 20(width)
+B_posiY = 300
+score_value_B = 0
+score_B_font = pygame.font.Font("freesansbold.ttf", 42)
+
+
+def show_B_player_score(x,y):
+    score = score_B_font.render("Player B : " + str(score_value_B) , True, WHITE)
+    screen.blit(score,(x,y))
+
+# About Ball
+ball_w = 20
+ball_h = 20
+ball_x = random.randint(250, 550)
+ball_y = random.randint(200, 400)
+go_down = True
+go_up = False
+go_left = True
+go_right = False
+
+
+def show_ball(x,y):
+    pygame.draw.rect(screen, BLUE, pygame.Rect((x,y ), (ball_w, ball_h)) )
+
+
+# Game Loop
+running = True
+while running:
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # ---- Game Logic -----
+    # clear the screen
+    screen.fill(BLACK)
+    # draw the net
+    pygame.draw.line(screen, WHITE, [399, 0], [399, 600], 5)
+    pygame.draw.line(screen, WHITE, [0, 50], [0, 55], 1600 )
+
+    # A Player Block
+    show_player(A_posiX,A_posiY)
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_w] and A_posiY > 55 :
+        A_posiY -= 5
+    if keys[pygame.K_s] and A_posiY < 500 :
+        A_posiY += 5
+
+    show_A_player_score(80, 6)
+
+    # B player Block
+    show_player(B_posiX, B_posiY)
+
+    keys = pygame.key.get_pressed()
+    if keys[pygame.K_UP] and B_posiY > 55:
+        B_posiY -= 5
+    if keys[pygame.K_DOWN] and B_posiY < 500:
+        B_posiY += 5
+
+    show_B_player_score(480, 6)
+
+    # Ball Movement
+    show_ball(ball_x,ball_y)
+
+    # Y-direction movement
+    if ball_y >= 580 :
+        go_up = True
+        go_down = False
+    if ball_y <= 55 :
+        go_down = True
+        go_up = False
+
+    if go_down :
+        ball_y += 5
+    else :
+        ball_y -= 5
+
+    # X-direction movement ( its look like tricky , bcoz we also have to check collision with paddles )
+
+    if ball_x <= 73 and ball_y >= A_posiY and ball_y+20 <= A_posiY + 100 :
+        ball_hit_sound.play()
+        go_right = True
+        go_left = False
+    if ball_x >= 710 and ball_y >= B_posiY and ball_y + 20 <= B_posiY + 100:
+        ball_hit_sound.play()
+        go_right = False
+        go_left = True
+
+    if ball_x < 50 :
+        score_value_B += 1
+        go_right = True
+        go_left = False
+        ball_x = random.randint(250, 550)
+        ball_y = random.randint(200, 400)
+    elif ball_x > 750 :
+        score_value_A += 1
+        go_right = False
+        go_left = True
+        ball_x = random.randint(250, 550)
+        ball_y = random.randint(200, 400)
+
+    if go_right:
+        ball_x += 3
+    if go_left:
+        ball_x -= 3
+
+
+    pygame.display.update()
+    # limit to 60 fps
+    fps.tick(60)
+
+pygame.quit()
